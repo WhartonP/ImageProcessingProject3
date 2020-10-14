@@ -1,38 +1,46 @@
-%Project two for image processing by Peter Wharton
-%Program that reads in an image of a rotated playing card, undoes the
-%rotation and then crops the card out of the picture, and then displays the
-%original and the cropped card. 
-clear; 
+%Project three for image processing by Peter Wharton and Farshad Bolouri
+%Program that takes opens a webcam and takes a picture of a playing card,
+%processes it and then displays the rank and suite of the card. 
+clear; close all; 
 
-fileName = input("Enter the image name with file type (.tif) (assuming in the same dir. as program): \n", 's');
-while fileName ~= '0'
-    close all;
-    imOrig = imread(fileName);
-    
-    ocrResults = ocr(imOrig);
-    Iocr = insertObjectAnnotation(imOrig, 'rectangle', ...
-                           ocrResults.WordBoundingBoxes, ...
-                           ocrResults.WordConfidences);
-    figure; imshow(Iocr);
+%finds and opens the webcam to take the pictures
+% cams = webcamlist;
+% cam = webcam(cams{1});
 
-    %Rotates the image
-    imBinOrig = imbinarize(imOrig, .6);
-    [cornerA, cornerB, cornerC] = findCorner(imBinOrig);
-    [angle, w, z] = findAngle(cornerA, cornerB, cornerC);
-    imOrig2 = imrotate(imOrig, angle);
+imOrig = imread('Testimage1.tif');
 
-    %Crops the image - for working program
-    imBinOrig2 =  imbinarize(imOrig2, .6);
-    stats = regionprops(imBinOrig2, 'all');
-    bboxes=stats.BoundingBox;
-    finalImage = imcrop(imOrig2, bboxes);
-    
-    figure;
-    subplot(1,2,1), imshow(imOrig);
-    subplot(1,2,2), imshow(finalImage);
-    fileName = input("Enter a new image name or a 0 to stop reading images in.\n", 's');
+%Testing Dr. Sarrafs code - works for rotation 
+imBin = double(imbinarize(imOrig));
+imSmooth = imgaussfilt(imBin, 4);
+[Gmag, Gdir] = imgradient(imSmooth);
+Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
+figure; imshow(Gdir, []);
+figure; hist = histogram(Gdir, 'BinWidth', 4);
+hist.BinCounts(1) = 0;
+[v, i] = max(hist.BinCounts);
+rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
+imRot = imrotate(imOrig, rot_ang, 'crop');
+figure; imshow(imRot);
+title(num2str(rot_ang));
 
-end
+
+%Rotates the image
+imBinOrig = imbinarize(imOrig, .6);
+[cornerA, cornerB, cornerC] = findCorner(imBinOrig);
+[angle, w, z] = findAngle(cornerA, cornerB, cornerC);
+imOrig2 = imrotate(imOrig, angle);
+
+%Crops the image - for working program
+imBinOrig2 =  imbinarize(imOrig2, .6);
+stats = regionprops(imBinOrig2, 'all');
+bboxes=stats.BoundingBox;
+finalImage = imcrop(imOrig2, bboxes);
+
+figure;
+subplot(1,2,1), imshow(imOrig);
+subplot(1,2,2), imshow(finalImage);
+fileName = input("Enter a new image name or a 0 to stop reading images in.\n", 's');
+
 
 %Function that finds 3 corners and then returns the angle needed to rotate
 function [A, B, C] = findCorner(im)
