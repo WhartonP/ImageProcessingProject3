@@ -11,7 +11,7 @@ clear; close all;
 % pause()
 % imOrig = rgb2gray(snapshot(cam));
 
-imOrig = imread('Testimage1.tif');
+imOrig = imread('Testimage2.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
 
@@ -19,12 +19,10 @@ imOrig = imread('Testimage1.tif');
 imBin = double(imbinarize(imOrig));
 imSmooth = imgaussfilt(imBin, 4);
 
-%trying use edge?
-
 %uses the gradient direction to find the angle 
 [Gmag, Gdir] = imgradient(imSmooth);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
-% figure; imshow(Gdir, []);
+figure; imshow(Gdir, []);
 figure; hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
 [v, i] = max(hist.BinCounts);
@@ -32,8 +30,8 @@ rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
 
 %rotates and shows the rotated image
 imRot = imrotate(imOrig, rot_ang, 'crop');
-% figure; imshow(imRot);
-% title(num2str(rot_ang));
+figure; imshow(imRot);
+title(num2str(rot_ang));
 
 
 %From orginal code for cropping
@@ -43,9 +41,9 @@ stats = regionprops(imBinOrig2, 'BoundingBox');
 bboxes=stats.BoundingBox;
 finalImage = imcrop(imRot, bboxes);
 
-% figure;
-% subplot(1,2,1), imshow(imOrig);
-% subplot(1,2,2), imshow(finalImage);
+figure;
+subplot(1,2,1), imshow(imOrig);
+subplot(1,2,2), imshow(finalImage);
 
 imshow(finalImage);
 segImg = imbinarize(finalImage);
@@ -57,23 +55,26 @@ Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
 connLabel2 = bwlabel(Gdir2);
 figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
 hist2.BinCounts(1) = 0;
-
-SE = [0 1 0; 1 1 1; 0 1 0];
-
-test = imerode(connLabel2, SE);
-test = imgaussfilt(test, 2);
-test = imdilate(test, SE);
-
+imshow(finalImage);
+% SE = [0 1 0; 1 1 1; 0 1 0];
+% 
+% test = imerode(connLabel2, SE);
+% test = imgaussfilt(test, 2);
+% test = imdilate(test, SE);
 
 
 stats2 = regionprops(segImg, 'Area', 'BoundingBox');
+croppedImages = cell(size(stats2, 1), 1);
 for k = 1 : length(stats2)
   if stats2(k).Area < 300 || stats2(k).Area > 1300
       continue
+  else
+      thisBB = stats2(k).BoundingBox;
+      rectangle('Position', [thisBB(1),thisBB(2),thisBB(3),thisBB(4)],...
+          'EdgeColor','r','LineWidth',2 )
+      croppedImages{k,1} = imcrop(finalImage, thisBB);
+      figure; imshow(croppedImages{k,1});
   end
-  thisBB = stats2(k).BoundingBox;
-  rectangle('Position', [thisBB(1),thisBB(2),thisBB(3),thisBB(4)],...
-  'EdgeColor','r','LineWidth',2 )
 end
 
 %none of this worked 
