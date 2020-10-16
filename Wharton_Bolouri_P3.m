@@ -6,133 +6,98 @@ clear; close all;
 %finds and opens the webcam to take the pictures
 % cams = webcamlist;
 % cam = webcam(cams{1});
+% disp('Press space to take the picture')
+% preview(cam);
+% pause()
+% imOrig = rgb2gray(snapshot(cam));
 
 imOrig = imread('Testimage1.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
+
+%binarize and smooths the image
 imBin = double(imbinarize(imOrig));
 imSmooth = imgaussfilt(imBin, 4);
+
+%trying use edge?
+
+%uses the gradient direction to find the angle 
 [Gmag, Gdir] = imgradient(imSmooth);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
-figure; imshow(Gdir, []);
+% figure; imshow(Gdir, []);
 figure; hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
 [v, i] = max(hist.BinCounts);
 rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
+
+%rotates and shows the rotated image
 imRot = imrotate(imOrig, rot_ang, 'crop');
-figure; imshow(imRot);
-title(num2str(rot_ang));
+% figure; imshow(imRot);
+% title(num2str(rot_ang));
 
 
-%Rotates the image
-imBinOrig = imbinarize(imOrig, .6);
-[cornerA, cornerB, cornerC] = findCorner(imBinOrig);
-[angle, w, z] = findAngle(cornerA, cornerB, cornerC);
-imOrig2 = imrotate(imOrig, angle);
-
+%From orginal code for cropping
 %Crops the image - for working program
-imBinOrig2 =  imbinarize(imOrig2, .6);
-stats = regionprops(imBinOrig2, 'all');
+imBinOrig2 =  imbinarize(imRot, .6);
+stats = regionprops(imBinOrig2, 'BoundingBox');
 bboxes=stats.BoundingBox;
-finalImage = imcrop(imOrig2, bboxes);
+finalImage = imcrop(imRot, bboxes);
 
-figure;
-subplot(1,2,1), imshow(imOrig);
-subplot(1,2,2), imshow(finalImage);
-fileName = input("Enter a new image name or a 0 to stop reading images in.\n", 's');
+% figure;
+% subplot(1,2,1), imshow(imOrig);
+% subplot(1,2,2), imshow(finalImage);
+
+imshow(finalImage);
+segImg = imbinarize(finalImage);
+segImg = imcomplement(segImg);
+connLabel = bwlabel(segImg);
+% connLabel = imgaussfilt(connLabel, 4);
+[Gmag2, Gdir2] = imgradient(connLabel);
+Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
+connLabel2 = bwlabel(Gdir2);
+figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
+hist2.BinCounts(1) = 0;
+
+SE = [0 1 0; 1 1 1; 0 1 0];
+
+test = imerode(connLabel2, SE);
+test = imgaussfilt(test, 2);
+test = imdilate(test, SE);
 
 
-%Function that finds 3 corners and then returns the angle needed to rotate
-function [A, B, C] = findCorner(im)
-    Gmag = imgradient(im);          %finds gradients of the filtered image
-    
-    %finds the size of the region to traverse the picture to find a cornor
-    pictureSize = size(im);
-    hSize = round(.001 * pictureSize(2));
-    vSize = round(.001 * pictureSize(1));
 
-    %finds the top left most cornor
-    foundC = false;
-    for i = 1:vSize:pictureSize(1) - vSize
-        for j = 1:hSize:pictureSize(2) - hSize
-            if mean(mean(Gmag(i : i + vSize, j : j + hSize))) ~= 0
-                C = [i + vSize, j + hSize];
-                foundC = true;
-            end
-            if foundC
-                break
-            end
-        end
-        if foundC
-            break
-        end
-    end
-
-    %finds the bottom right most cornor
-    foundC = false;
-    for i = pictureSize(1) - vSize: -vSize: vSize
-        for j = pictureSize(2) - hSize: -hSize: 1
-            if mean(mean(Gmag(i : i + vSize, j : j + hSize))) ~= 0
-                B = [i + vSize, j + hSize];
-                foundC = true;
-            end
-            if foundC
-                break
-            end
-        end
-        if foundC
-            break
-        end
-    end
-
-    %Finds the second top right hand corner 
-    foundC = false;
-    for i = pictureSize(2) - hSize: -hSize: hSize
-        for j = 1:vSize:pictureSize(1) - vSize
-            if mean(mean(Gmag(j : j + vSize, i : i + hSize))) ~= 0
-                A = [j + hSize, i + vSize];
-                foundC = true;
-            end
-            if foundC
-                break
-            end
-        end
-        if foundC
-            break
-        end
-    end
+stats2 = regionprops(segImg, 'Area', 'BoundingBox');
+for k = 1 : length(stats2)
+  if stats2(k).Area < 300 || stats2(k).Area > 1300
+      continue
+  end
+  thisBB = stats2(k).BoundingBox;
+  rectangle('Position', [thisBB(1),thisBB(2),thisBB(3),thisBB(4)],...
+  'EdgeColor','r','LineWidth',2 )
 end
 
-%Finds the angle of rotation 
-function [angle, w, z] = findAngle(cornerA, cornerB, cornerC)
-    %Finds all the magnitudes and distances needed 
+%none of this worked 
+% segImg = bwlabel(imbinarize(finalImage));
+% stats2 = regionprops(segImg, 'Area', 'BoundingBox');
+% for k = 1 : length(stats2)
+%   thisBB = stats2(k).BoundingBox;
+%   rectangle('Position', [thisBB(1),thisBB(2),thisBB(3),thisBB(4)],...
+%   'EdgeColor','r','LineWidth',2 )
+% end
+% 
+% %maybe binarized final image and then use bwlabel to find connected objects
+% segImg = bwlabel(imbinarize(finalImage));
+% figure; imshow(segImg);
+% 
+% hold on
+% boundaries = bwboundaries(segImg);
+% numberOfBoundaries = size(boundaries, 1);
+% for k = 1 : numberOfBoundaries
+% 	thisBoundary = boundaries{k};
+% 	plot(thisBoundary(:,2), thisBoundary(:,1), 'g', 'LineWidth', 2);
+% end
+% hold off;
 
-    %distance from C - A
-    w = norm(cornerC - cornerA);
-
-    %x distance from A - B
-    x = abs(cornerA(2) - cornerB(2));
-
-    %y distance form A - B
-    y = abs(cornerA(1) - cornerB(1));
-
-    %distance between A - B
-    z = norm(cornerA - cornerB);
-
-    %card is perpenducular to x axis and standing up
-    if cornerA(2) == cornerB(2) && w < z
-        angle = 0;
-    %card is perpendicular to x axis but on its side
-    elseif cornerA(2) == cornerB(2) && w > z
-        angle = 90;
-    %card is angled and long side is tilted to ground so has to rotate left
-    elseif w < z
-        angle = 90 - atand(y / x); 
-    %card is angled and short side is tilited to ground so has to rotate right
-    else
-        angle = -atand(y/x);
-    end
-end
 
 
 
