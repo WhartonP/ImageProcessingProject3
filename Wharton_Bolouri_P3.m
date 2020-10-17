@@ -11,7 +11,7 @@ clear; close all;
 % pause()
 % imOrig = rgb2gray(snapshot(cam));
 
-imOrig = imread('Testimage2.tif');
+imOrig = imread('Testimage3.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
 
@@ -22,16 +22,13 @@ imSmooth = imgaussfilt(imBin, 4);
 %uses the gradient direction to find the angle 
 [Gmag, Gdir] = imgradient(imSmooth);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
-figure; imshow(Gdir, []);
-figure; hist = histogram(Gdir, 'BinWidth', 4);
+hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
 [v, i] = max(hist.BinCounts);
 rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
 
 %rotates and shows the rotated image
 imRot = imrotate(imOrig, rot_ang, 'crop');
-figure; imshow(imRot);
-title(num2str(rot_ang));
 
 
 %From orginal code for cropping
@@ -41,66 +38,35 @@ stats = regionprops(imBinOrig2, 'BoundingBox');
 bboxes=stats.BoundingBox;
 finalImage = imcrop(imRot, bboxes);
 
-figure;
-subplot(1,2,1), imshow(imOrig);
-subplot(1,2,2), imshow(finalImage);
-
-imshow(finalImage);
 segImg = imbinarize(finalImage);
 segImg = imcomplement(segImg);
 connLabel = bwlabel(segImg);
-% connLabel = imgaussfilt(connLabel, 4);
 [Gmag2, Gdir2] = imgradient(connLabel);
 Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
 connLabel2 = bwlabel(Gdir2);
 figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
 hist2.BinCounts(1) = 0;
-imshow(finalImage);
-% SE = [0 1 0; 1 1 1; 0 1 0];
-% 
-% test = imerode(connLabel2, SE);
-% test = imgaussfilt(test, 2);
-% test = imdilate(test, SE);
-
 
 stats2 = regionprops(segImg, 'Area', 'BoundingBox');
-croppedImages = cell(size(stats2, 1), 1);
+croppedImages = cell(size(stats2, 1), 2);
+count = 0;
+
 for k = 1 : length(stats2)
-  if stats2(k).Area < 300 || stats2(k).Area > 1300
-      continue
-  else
-      thisBB = stats2(k).BoundingBox;
-      rectangle('Position', [thisBB(1),thisBB(2),thisBB(3),thisBB(4)],...
-          'EdgeColor','r','LineWidth',2 )
-      croppedImages{k,1} = imcrop(finalImage, thisBB);
-      figure; imshow(croppedImages{k,1});
-  end
+    thisBB = stats2(k).BoundingBox;
+    croppedImages{k,2} = abs(thisBB(3) / thisBB(4));
+    if croppedImages{k,2} < 1 && croppedImages{k,2} > 0.5 && stats2(k).Area > 300
+        if count == 1
+            rank = imcrop(finalImage, thisBB);
+        elseif count == 0
+            suit = imcrop(finalImage, thisBB);
+        end
+        croppedImages{k,1} = imcrop(finalImage, thisBB);
+        count = count + 1;
+    end
 end
 
-%none of this worked 
-% segImg = bwlabel(imbinarize(finalImage));
-% stats2 = regionprops(segImg, 'Area', 'BoundingBox');
-% for k = 1 : length(stats2)
-%   thisBB = stats2(k).BoundingBox;
-%   rectangle('Position', [thisBB(1),thisBB(2),thisBB(3),thisBB(4)],...
-%   'EdgeColor','r','LineWidth',2 )
-% end
-% 
-% %maybe binarized final image and then use bwlabel to find connected objects
-% segImg = bwlabel(imbinarize(finalImage));
-% figure; imshow(segImg);
-% 
-% hold on
-% boundaries = bwboundaries(segImg);
-% numberOfBoundaries = size(boundaries, 1);
-% for k = 1 : numberOfBoundaries
-% 	thisBoundary = boundaries{k};
-% 	plot(thisBoundary(:,2), thisBoundary(:,1), 'g', 'LineWidth', 2);
-% end
-% hold off;
-
-
-
-
-
-
+close all
+figure 
+imshow(rank);
+figure 
+imshow(suit);
