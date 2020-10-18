@@ -11,7 +11,7 @@ clear; close all;
 % pause()
 % imOrig = rgb2gray(snapshot(cam));
 
-imOrig = imread('Testimage3.tif');
+imOrig = imread('Testimage5.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
 
@@ -70,3 +70,47 @@ figure
 imshow(rank);
 figure 
 imshow(suit);
+
+digits = {};
+while isempty(digits)
+    %To get the rank of the card
+    figure('Name', 'Rank'); imshow(rank);
+    Enhanced3 = imadjust(rank);
+    binary4 = imbinarize(Enhanced3);
+    results = ocr(binary4,'TextLayout','Block');
+    regularExpr = '\d';
+    % Get bounding boxes around text that matches the regular expression
+    bboxes = locateText(results,regularExpr,'UseRegexp',true);
+    digits = regexp(results.Text,regularExpr,'match');
+    if isempty(digits)
+        temp = rank;
+        rank = suit;
+        suit = rank;
+    end
+end
+
+% draw boxes around the digits
+% Idigits = insertObjectAnnotation(R,'rectangle',STATS3.BoundingBox(10,:),digits);
+% 
+% figure; 
+% imshow(Idigits);
+
+%--------------------------------------------------------------------------
+load categoryClassifier
+
+% cropped2 = imcrop(R, STATS3.BoundingBox(20,:));
+figure('Name', 'Suit'); imshow(suit);
+
+[labelIdx, ~] = predict(categoryClassifier, suit);
+
+%--------------------------------------------------------------------------
+
+predictSuit = categoryClassifier.Labels(labelIdx);
+
+
+disp(digits{1,1}); 
+disp(predictSuit);
+% RankSuit = insertObjectAnnotation(rank,'rectangle',...
+%     [STATS3.BoundingBox(20,:);STATS3.BoundingBox(10,:)],...
+%     [categoryClassifier.Labels(labelIdx) digits]);
+% imshow(RankSuit);
