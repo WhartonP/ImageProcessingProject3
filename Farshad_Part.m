@@ -1,16 +1,18 @@
-%% Farshad Bolouri - R11630884 - Image Processing - Project 2
-clear
+% Farshad Bolouri - R11630884 - Image Processing - Project 2
 close all
 %Image = inputdlg("Enter your filename:" + newline + ...%
 %"For example: V:\Image-Processing-Projects\ImageSet2\Testimage2.tif");
-Image = imread("V:\Image-Processing-Projects\ImageSet2\Testimage1.tif");
+Image = imread("Testimages/IMG_1495.jpeg");
+imshow(Image)
+figure
+Image = rgb2gray(Image);
 %% 
 blurred = imgaussfilt(Image);
 
 binary = imbinarize(blurred);
 
 BW = edge(binary,'Canny');
-
+imshow(BW)
 STATS = regionprops('table',BW,'Orientation','Area');
 [~,k] = max(STATS.Area);
 if STATS.Orientation(k) < 45
@@ -52,8 +54,8 @@ end
 %--------------------------------------------------------------------------
 load categoryClassifierRanks
 
-cropped = imcrop(R, [STATS3.BoundingBox(3,1) - 8 , STATS3.BoundingBox(3,2) - 8 ,...
-    STATS3.BoundingBox(3,3) + 16, STATS3.BoundingBox(3,4) + 16]);
+cropped = imcrop(R, [STATS3.BoundingBox(87,1) - 8 , STATS3.BoundingBox(87,2) - 8 ,...
+    STATS3.BoundingBox(87,3) + 16, STATS3.BoundingBox(87,4) + 16]);
 
 [labelIdx, scores] = predict(categoryClassifier, cropped);
 
@@ -61,15 +63,15 @@ cropped = imcrop(R, [STATS3.BoundingBox(3,1) - 8 , STATS3.BoundingBox(3,2) - 8 ,
 %--------------------------------------------------------------------------
 load categoryClassifierSuits
 
-cropped2 = imcrop(R, [STATS3.BoundingBox(4,1) - 8 , STATS3.BoundingBox(4,2) - 8 ,...
-    STATS3.BoundingBox(4,3) + 16, STATS3.BoundingBox(4,4) + 16]);
+cropped2 = imcrop(R, [STATS3.BoundingBox(71,1) - 8 , STATS3.BoundingBox(71,2) - 8 ,...
+    STATS3.BoundingBox(71,3) + 16, STATS3.BoundingBox(71,4) + 16]);
 
 [labelIdx2, ~] = predict(categoryClassifierSuits, cropped2);
 
 %--------------------------------------------------------------------------
 
 RankSuit = insertObjectAnnotation(R,'rectangle',...
-    [STATS3.BoundingBox(4,:);STATS3.BoundingBox(3,:)],...
+    [STATS3.BoundingBox(71,:);STATS3.BoundingBox(87,:)],...
     [categoryClassifierSuits.Labels(labelIdx2) ...
     categoryClassifier.Labels(labelIdx)]);
 imshow(RankSuit);

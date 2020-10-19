@@ -4,137 +4,113 @@
 clear; close all; 
 
 %finds and opens the webcam to take the pictures
-% cams = webcamlist;
-% cam = webcam(cams{1});
+cams = webcamlist;
+cam = webcam(cams{1});
+disp('Press space to take the picture')
+preview(cam);
+pause()
+imOrig = rgb2gray(snapshot(cam));
 
-imOrig = imread('Testimage1.tif');
+% imOrig = imread('Testimage5.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
+
+%binarize and smooths the image
 imBin = double(imbinarize(imOrig));
 imSmooth = imgaussfilt(imBin, 4);
+
+%uses the gradient direction to find the angle 
 [Gmag, Gdir] = imgradient(imSmooth);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
-figure; imshow(Gdir, []);
-figure; hist = histogram(Gdir, 'BinWidth', 4);
+hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
 [v, i] = max(hist.BinCounts);
 rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
+
+%rotates and shows the rotated image
 imRot = imrotate(imOrig, rot_ang, 'crop');
-figure; imshow(imRot);
-title(num2str(rot_ang));
 
 
-%Rotates the image
-imBinOrig = imbinarize(imOrig, .6);
-[cornerA, cornerB, cornerC] = findCorner(imBinOrig);
-[angle, w, z] = findAngle(cornerA, cornerB, cornerC);
-imOrig2 = imrotate(imOrig, angle);
-
+%From orginal code for cropping
 %Crops the image - for working program
-imBinOrig2 =  imbinarize(imOrig2, .6);
-stats = regionprops(imBinOrig2, 'all');
+imBinOrig2 =  imbinarize(imRot, .6);
+stats = regionprops(imBinOrig2, 'BoundingBox');
 bboxes=stats.BoundingBox;
-finalImage = imcrop(imOrig2, bboxes);
+finalImage = imcrop(imRot, bboxes);
 
-figure;
-subplot(1,2,1), imshow(imOrig);
-subplot(1,2,2), imshow(finalImage);
-fileName = input("Enter a new image name or a 0 to stop reading images in.\n", 's');
+segImg = imbinarize(finalImage);
+segImg = imcomplement(segImg);
+connLabel = bwlabel(segImg);
+[Gmag2, Gdir2] = imgradient(connLabel);
+Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
+connLabel2 = bwlabel(Gdir2);
+figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
+hist2.BinCounts(1) = 0;
 
+stats2 = regionprops(segImg, 'Area', 'BoundingBox');
+croppedImages = cell(size(stats2, 1), 2);
+count = 0;
 
-%Function that finds 3 corners and then returns the angle needed to rotate
-function [A, B, C] = findCorner(im)
-    Gmag = imgradient(im);          %finds gradients of the filtered image
-    
-    %finds the size of the region to traverse the picture to find a cornor
-    pictureSize = size(im);
-    hSize = round(.001 * pictureSize(2));
-    vSize = round(.001 * pictureSize(1));
-
-    %finds the top left most cornor
-    foundC = false;
-    for i = 1:vSize:pictureSize(1) - vSize
-        for j = 1:hSize:pictureSize(2) - hSize
-            if mean(mean(Gmag(i : i + vSize, j : j + hSize))) ~= 0
-                C = [i + vSize, j + hSize];
-                foundC = true;
-            end
-            if foundC
-                break
-            end
+for k = 1 : length(stats2)
+    thisBB = stats2(k).BoundingBox;
+    croppedImages{k,2} = abs(thisBB(3) / thisBB(4));
+    if croppedImages{k,2} < 1 && croppedImages{k,2} > 0.5 && stats2(k).Area > 300
+        if count == 1
+            rank = imcrop(finalImage, thisBB);
+        elseif count == 0
+            suit = imcrop(finalImage, thisBB);
         end
-        if foundC
-            break
-        end
-    end
-
-    %finds the bottom right most cornor
-    foundC = false;
-    for i = pictureSize(1) - vSize: -vSize: vSize
-        for j = pictureSize(2) - hSize: -hSize: 1
-            if mean(mean(Gmag(i : i + vSize, j : j + hSize))) ~= 0
-                B = [i + vSize, j + hSize];
-                foundC = true;
-            end
-            if foundC
-                break
-            end
-        end
-        if foundC
-            break
-        end
-    end
-
-    %Finds the second top right hand corner 
-    foundC = false;
-    for i = pictureSize(2) - hSize: -hSize: hSize
-        for j = 1:vSize:pictureSize(1) - vSize
-            if mean(mean(Gmag(j : j + vSize, i : i + hSize))) ~= 0
-                A = [j + hSize, i + vSize];
-                foundC = true;
-            end
-            if foundC
-                break
-            end
-        end
-        if foundC
-            break
-        end
+        croppedImages{k,1} = imcrop(finalImage, thisBB);
+        count = count + 1;
     end
 end
 
-%Finds the angle of rotation 
-function [angle, w, z] = findAngle(cornerA, cornerB, cornerC)
-    %Finds all the magnitudes and distances needed 
+close all
+figure 
+imshow(rank);
+figure 
+imshow(suit);
 
-    %distance from C - A
-    w = norm(cornerC - cornerA);
-
-    %x distance from A - B
-    x = abs(cornerA(2) - cornerB(2));
-
-    %y distance form A - B
-    y = abs(cornerA(1) - cornerB(1));
-
-    %distance between A - B
-    z = norm(cornerA - cornerB);
-
-    %card is perpenducular to x axis and standing up
-    if cornerA(2) == cornerB(2) && w < z
-        angle = 0;
-    %card is perpendicular to x axis but on its side
-    elseif cornerA(2) == cornerB(2) && w > z
-        angle = 90;
-    %card is angled and long side is tilted to ground so has to rotate left
-    elseif w < z
-        angle = 90 - atand(y / x); 
-    %card is angled and short side is tilited to ground so has to rotate right
-    else
-        angle = -atand(y/x);
+digits = {};
+while isempty(digits)
+    %To get the rank of the card
+    figure('Name', 'Rank'); imshow(rank);
+    Enhanced3 = imadjust(rank);
+    binary4 = imbinarize(Enhanced3);
+    results = ocr(binary4,'TextLayout','Block');
+    regularExpr = '\d';
+    % Get bounding boxes around text that matches the regular expression
+    bboxes = locateText(results,regularExpr,'UseRegexp',true);
+    digits = regexp(results.Text,regularExpr,'match');
+    if isempty(digits)
+        temp = rank;
+        rank = suit;
+        suit = rank;
     end
 end
 
+% draw boxes around the digits
+% Idigits = insertObjectAnnotation(R,'rectangle',STATS3.BoundingBox(10,:),digits);
+% 
+% figure; 
+% imshow(Idigits);
+
+%--------------------------------------------------------------------------
+load categoryClassifier
+
+% cropped2 = imcrop(R, STATS3.BoundingBox(20,:));
+figure('Name', 'Suit'); imshow(suit);
+
+[labelIdx, ~] = predict(categoryClassifier, suit);
+
+%--------------------------------------------------------------------------
+
+predictSuit = categoryClassifier.Labels(labelIdx);
 
 
-
-
+disp(digits{1,1}); 
+disp(predictSuit);
+% RankSuit = insertObjectAnnotation(rank,'rectangle',...
+%     [STATS3.BoundingBox(20,:);STATS3.BoundingBox(10,:)],...
+%     [categoryClassifier.Labels(labelIdx) digits]);
+% imshow(RankSuit);
