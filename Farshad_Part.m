@@ -3,7 +3,7 @@ clear
 close all
 %Image = inputdlg("Enter your filename:" + newline + ...%
 %"For example: V:\Image-Processing-Projects\ImageSet2\Testimage2.tif");
-Image = imread("V:\Image-Processing-Projects\ImageSet2\Testimage3.tif");
+Image = imread("V:\Image-Processing-Projects\ImageSet2\Testimage1.tif");
 %% 
 blurred = imgaussfilt(Image);
 
@@ -48,37 +48,28 @@ for i = 1:length(STATS3.BoundingBox)
         rectangle('Position',STATS3.BoundingBox(i,:),'EdgeColor','r'); 
 end
 
-cropped = imcrop(R, STATS3.BoundingBox(10,:));
-
-Enhanced3 = imadjust(cropped);
-
-binary4 = imbinarize(Enhanced3);
-
-results = ocr(binary4,'TextLayout','Block');
-
-regularExpr = '\d';
-
-% Get bounding boxes around text that matches the regular expression
-bboxes = locateText(results,regularExpr,'UseRegexp',true);
-
-digits = regexp(results.Text,regularExpr,'match');
-
-% draw boxes around the digits
-% Idigits = insertObjectAnnotation(R,'rectangle',STATS3.BoundingBox(10,:),digits);
-% 
-% figure; 
-% imshow(Idigits);
 
 %--------------------------------------------------------------------------
-load categoryClassifier
+load categoryClassifierRanks
 
-cropped2 = imcrop(R, STATS3.BoundingBox(20,:));
+cropped = imcrop(R, [STATS3.BoundingBox(3,1) - 8 , STATS3.BoundingBox(3,2) - 8 ,...
+    STATS3.BoundingBox(3,3) + 16, STATS3.BoundingBox(3,4) + 16]);
 
-[labelIdx, ~] = predict(categoryClassifier, cropped2);
+[labelIdx, scores] = predict(categoryClassifier, cropped);
+
+
+%--------------------------------------------------------------------------
+load categoryClassifierSuits
+
+cropped2 = imcrop(R, [STATS3.BoundingBox(4,1) - 8 , STATS3.BoundingBox(4,2) - 8 ,...
+    STATS3.BoundingBox(4,3) + 16, STATS3.BoundingBox(4,4) + 16]);
+
+[labelIdx2, ~] = predict(categoryClassifierSuits, cropped2);
 
 %--------------------------------------------------------------------------
 
 RankSuit = insertObjectAnnotation(R,'rectangle',...
-    [STATS3.BoundingBox(20,:);STATS3.BoundingBox(10,:)],...
-    [categoryClassifier.Labels(labelIdx) digits]);
+    [STATS3.BoundingBox(4,:);STATS3.BoundingBox(3,:)],...
+    [categoryClassifierSuits.Labels(labelIdx2) ...
+    categoryClassifier.Labels(labelIdx)]);
 imshow(RankSuit);
