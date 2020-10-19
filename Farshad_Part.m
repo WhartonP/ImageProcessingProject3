@@ -1,10 +1,10 @@
-%% Farshad Bolouri - R11630884 - Image Processing - Project 2
-clear
+% Farshad Bolouri - R11630884 - Image Processing - Project 2
 close all
 %Image = inputdlg("Enter your filename:" + newline + ...%
 %"For example: V:\Image-Processing-Projects\ImageSet2\Testimage2.tif");
-Image = imread("V:\Image-Processing-Projects\ImageSet2\Testimage3.tif");
-%% 
+%Image = imread("V:\Image-Processing-Projects\ImageSet2\Testimage3.tif");
+
+Image = imOrig;
 blurred = imgaussfilt(Image);
 
 binary = imbinarize(blurred);

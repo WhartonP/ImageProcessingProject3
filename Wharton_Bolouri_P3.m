@@ -4,14 +4,14 @@
 clear; close all; 
 
 %finds and opens the webcam to take the pictures
-% cams = webcamlist;
-% cam = webcam(cams{1});
-% disp('Press space to take the picture')
-% preview(cam);
-% pause()
-% imOrig = rgb2gray(snapshot(cam));
+cams = webcamlist;
+cam = webcam(cams{1});
+disp('Press space to take the picture')
+preview(cam);
+pause()
+imOrig = rgb2gray(snapshot(cam));
 
-imOrig = imread('Testimage5.tif');
+% imOrig = imread('Testimage5.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
 
