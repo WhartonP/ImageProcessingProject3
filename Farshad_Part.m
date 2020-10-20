@@ -1,8 +1,9 @@
 % Farshad Bolouri - R11630884 - Image Processing - Project 2
 close all
+clear
 %Image = inputdlg("Enter your filename:" + newline + ...%
 %"For example: V:\Image-Processing-Projects\ImageSet2\Testimage2.tif");
-Image = imread("Testimages/IMG_1495.jpeg");
+Image = imread("Testimages/IMG_1510.jpeg");
 imshow(Image)
 figure
 Image = rgb2gray(Image);
@@ -12,7 +13,7 @@ blurred = imgaussfilt(Image);
 binary = imbinarize(blurred);
 
 BW = edge(binary,'Canny');
-imshow(BW)
+
 STATS = regionprops('table',BW,'Orientation','Area');
 [~,k] = max(STATS.Area);
 if STATS.Orientation(k) < 45
@@ -52,26 +53,34 @@ end
 
 
 %--------------------------------------------------------------------------
-load categoryClassifierRanks
+load categoryClassifierRanks2
 
-cropped = imcrop(R, [STATS3.BoundingBox(87,1) - 8 , STATS3.BoundingBox(87,2) - 8 ,...
-    STATS3.BoundingBox(87,3) + 16, STATS3.BoundingBox(87,4) + 16]);
+cropped = imcrop(R, [STATS3.BoundingBox(2,1) - 8 , STATS3.BoundingBox(2,2) - 8 ,...
+    STATS3.BoundingBox(2,3) + 16, STATS3.BoundingBox(2,4) + 16]);
 
 [labelIdx, scores] = predict(categoryClassifier, cropped);
 
 
 %--------------------------------------------------------------------------
+% load ranksClassifierCNN3
+% 
+% cropped = imcrop(R, [STATS3.BoundingBox(3,1) - 8 , STATS3.BoundingBox(3,2) - 8 ,...
+%     STATS3.BoundingBox(3,3) + 16, STATS3.BoundingBox(3,4) + 16]);
+% 
+% labelCNN = classify(net, imresize(cropped,[128 128]));
+
+%--------------------------------------------------------------------------
 load categoryClassifierSuits
 
-cropped2 = imcrop(R, [STATS3.BoundingBox(71,1) - 8 , STATS3.BoundingBox(71,2) - 8 ,...
-    STATS3.BoundingBox(71,3) + 16, STATS3.BoundingBox(71,4) + 16]);
+cropped2 = imcrop(R, [STATS3.BoundingBox(5,1) - 8 , STATS3.BoundingBox(5,2) - 8 ,...
+    STATS3.BoundingBox(5,3) + 16, STATS3.BoundingBox(5,4) + 16]);
 
 [labelIdx2, ~] = predict(categoryClassifierSuits, cropped2);
 
 %--------------------------------------------------------------------------
-
 RankSuit = insertObjectAnnotation(R,'rectangle',...
-    [STATS3.BoundingBox(71,:);STATS3.BoundingBox(87,:)],...
+    [STATS3.BoundingBox(5,:);STATS3.BoundingBox(2,:)],...
     [categoryClassifierSuits.Labels(labelIdx2) ...
+    %labelCNN]);
     categoryClassifier.Labels(labelIdx)]);
 imshow(RankSuit);

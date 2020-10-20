@@ -9,7 +9,7 @@ imds = imageDatastore(imageFolder, 'LabelSource', 'foldernames',...
     'IncludeSubfolders',true);
 
 %% Split Dataset for training and evaluation
-[trainingSet,testSet] = splitEachLabel(imds,0.7,'randomize');
+[trainingSet,testSet] = splitEachLabel(imds,0.8,'randomize');
 
 %% counting the labels
 tbl = countEachLabel(imds)
@@ -31,4 +31,4 @@ disp('-------------------------------------------------------');
 mean(diag(confMatrix))
 disp('-------------------------------------------------------');
 
-save categoryClassifierRanks
+save categoryClassifierRanks2
