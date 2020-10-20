@@ -4,23 +4,27 @@
 clear; close all; 
 
 %finds and opens the webcam to take the pictures
-cams = webcamlist;
-cam = webcam(cams{1});
-disp('Press space to take the picture')
-preview(cam);
-pause()
-imOrig = rgb2gray(snapshot(cam));
+% cams = webcamlist;
+% cam = webcam(cams{1});
+% disp('Press space to take the picture')
+% preview(cam);
+% pause()
+% imOrig = imread('TestImages/IMG_1492.jpeg');
+% imOrig = imread('TestImages/WebcamImageRealBackG_1.jpg');
+imOrig = rgb2gray(imread('TestImages/SimpleBG.jpg'));
+% imOrig = rgb2gray(imOrig);
+% imOrig = rgb2gray(snapshot(cam));
 
 % imOrig = imread('Testimage5.tif');
 
 %Testing Dr. Sarrafs code - works for rotation 
 
 %binarize and smooths the image
-imBin = double(imbinarize(imOrig));
-imSmooth = imgaussfilt(imBin, 4);
+imSmooth = imgaussfilt(imOrig, 4);
+imBin = double(imbinarize(imSmooth));
 
 %uses the gradient direction to find the angle 
-[Gmag, Gdir] = imgradient(imSmooth);
+[Gmag, Gdir] = imgradient(imBin);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
 hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
