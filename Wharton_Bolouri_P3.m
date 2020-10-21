@@ -9,37 +9,54 @@ clear; close all;
 % disp('Press space to take the picture')
 % preview(cam);
 % pause()
-% imOrig = imread('TestImages/IMG_1492.jpeg');
-% imOrig = imread('TestImages/WebcamImageRealBackG_1.jpg');
-imOrig = rgb2gray(imread('TestImages/SimpleBG.jpg'));
-% imOrig = rgb2gray(imOrig);
 % imOrig = rgb2gray(snapshot(cam));
 
-% imOrig = imread('Testimage5.tif');
+
+imageNum = 0;
+
+for k = 2545:2596
+imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_' num2str(k) '.jpeg']));
+% imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_2556.jpeg']));
+% imshow(imOrig);
 
 %Testing Dr. Sarrafs code - works for rotation 
 
 %binarize and smooths the image
-imSmooth = imgaussfilt(imOrig, 4);
-imBin = double(imbinarize(imSmooth));
+imBin = double(imbinarize(imOrig));
+imSmooth = imgaussfilt(imBin, 10);
+
+% figure; imshow(imBin);
+
+% stats = regionprops(imBin, 'BoundingBox');
+% for i = 1:length(stats)
+%     rectangle('Position',stats.BoundingBox(i,:),'EdgeColor','r'); 
+% end
+% imCrop = imcrop(imSmooth, stats.BoundingBox);
 
 %uses the gradient direction to find the angle 
-[Gmag, Gdir] = imgradient(imBin);
+[Gmag, Gdir] = imgradient(imSmooth);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
-hist = histogram(Gdir, 'BinWidth', 4);
+figure; hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
 [v, i] = max(hist.BinCounts);
 rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
 
 %rotates and shows the rotated image
 imRot = imrotate(imOrig, rot_ang, 'crop');
-
+% imshow(imRot);
 
 %From orginal code for cropping
 %Crops the image - for working program
 imBinOrig2 =  imbinarize(imRot, .6);
-stats = regionprops(imBinOrig2, 'BoundingBox');
-bboxes=stats.BoundingBox;
+stats = regionprops(imBinOrig2, 'BoundingBox', 'Area');
+areas = stats.Area;
+[val,ind] = max([stats.Area]);
+bboxes=stats(ind).BoundingBox;
+% imshow(imBinOrig2);
+% for i = 1:length(stats)
+%     rectangle('Position',stats(i).BoundingBox,'EdgeColor','r');
+%     pause()
+% end
 finalImage = imcrop(imRot, bboxes);
 
 segImg = imbinarize(finalImage);
@@ -55,18 +72,35 @@ stats2 = regionprops(segImg, 'Area', 'BoundingBox');
 croppedImages = cell(size(stats2, 1), 2);
 count = 0;
 
-for k = 1 : length(stats2)
-    thisBB = stats2(k).BoundingBox;
-    croppedImages{k,2} = abs(thisBB(3) / thisBB(4));
-    if croppedImages{k,2} < 1 && croppedImages{k,2} > 0.5 && stats2(k).Area > 300
+% figure; imshow(segImg);
+
+% for i = 1:length(stats2)
+%     rectangle('Position',stats2(i).BoundingBox,'EdgeColor','r');
+% %     pause()
+% end
+
+for j = 1 : length(stats2)
+    thisBB = stats2(j).BoundingBox;
+    croppedImages{j,2} = thisBB(3) / thisBB(4);
+    rectangle('Position', thisBB,'EdgeColor','r')
+    if count >= 2
+        break
+    elseif croppedImages{j,2} < 1 && croppedImages{j,2} > 0.5 && ...
+                            stats2(j).Area > 300 && stats2(j).Area < 10000
         if count == 1
             rank = imcrop(finalImage, thisBB);
+            imwrite(rank, ['CardRank' num2str(imageNum) '.jpg']);
+            imageNum = imageNum + 1;
         elseif count == 0
             suit = imcrop(finalImage, thisBB);
+            imwrite(suit, ['CardSuit' num2str(imageNum) '.jpg']);
+            imageNum = imageNum + 1;
         end
-        croppedImages{k,1} = imcrop(finalImage, thisBB);
+        croppedImages{j,1} = imcrop(finalImage, thisBB);
         count = count + 1;
     end
+end
+
 end
 
 close all
