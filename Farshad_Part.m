@@ -1,10 +1,13 @@
 % Farshad Bolouri - R11630884 - Image Processing - Project 2
 close all
+clear
 %Image = inputdlg("Enter your filename:" + newline + ...%
 %"For example: V:\Image-Processing-Projects\ImageSet2\Testimage2.tif");
-%Image = imread("V:\Image-Processing-Projects\ImageSet2\Testimage3.tif");
-
-Image = imOrig;
+Image = imread("Testimages/IMG_1510.jpeg");
+imshow(Image)
+figure
+Image = rgb2gray(Image);
+%% 
 blurred = imgaussfilt(Image);
 
 binary = imbinarize(blurred);
@@ -48,37 +51,36 @@ for i = 1:length(STATS3.BoundingBox)
         rectangle('Position',STATS3.BoundingBox(i,:),'EdgeColor','r'); 
 end
 
-cropped = imcrop(R, STATS3.BoundingBox(10,:));
 
-Enhanced3 = imadjust(cropped);
+%--------------------------------------------------------------------------
+load categoryClassifierRanks2
 
-binary4 = imbinarize(Enhanced3);
+cropped = imcrop(R, [STATS3.BoundingBox(2,1) - 8 , STATS3.BoundingBox(2,2) - 8 ,...
+    STATS3.BoundingBox(2,3) + 16, STATS3.BoundingBox(2,4) + 16]);
 
-results = ocr(binary4,'TextLayout','Block');
+[labelIdx, scores] = predict(categoryClassifier, cropped);
 
-regularExpr = '\d';
 
-% Get bounding boxes around text that matches the regular expression
-bboxes = locateText(results,regularExpr,'UseRegexp',true);
-
-digits = regexp(results.Text,regularExpr,'match');
-
-% draw boxes around the digits
-% Idigits = insertObjectAnnotation(R,'rectangle',STATS3.BoundingBox(10,:),digits);
+%--------------------------------------------------------------------------
+% load ranksClassifierCNN3
 % 
-% figure; 
-% imshow(Idigits);
+% cropped = imcrop(R, [STATS3.BoundingBox(3,1) - 8 , STATS3.BoundingBox(3,2) - 8 ,...
+%     STATS3.BoundingBox(3,3) + 16, STATS3.BoundingBox(3,4) + 16]);
+% 
+% labelCNN = classify(net, imresize(cropped,[128 128]));
 
 %--------------------------------------------------------------------------
-load categoryClassifier
+load categoryClassifierSuits
 
-cropped2 = imcrop(R, STATS3.BoundingBox(20,:));
+cropped2 = imcrop(R, [STATS3.BoundingBox(5,1) - 8 , STATS3.BoundingBox(5,2) - 8 ,...
+    STATS3.BoundingBox(5,3) + 16, STATS3.BoundingBox(5,4) + 16]);
 
-[labelIdx, ~] = predict(categoryClassifier, cropped2);
+[labelIdx2, ~] = predict(categoryClassifierSuits, cropped2);
 
 %--------------------------------------------------------------------------
-
 RankSuit = insertObjectAnnotation(R,'rectangle',...
-    [STATS3.BoundingBox(20,:);STATS3.BoundingBox(10,:)],...
-    [categoryClassifier.Labels(labelIdx) digits]);
+    [STATS3.BoundingBox(5,:);STATS3.BoundingBox(2,:)],...
+    [categoryClassifierSuits.Labels(labelIdx2) ...
+    %labelCNN]);
+    categoryClassifier.Labels(labelIdx)]);
 imshow(RankSuit);

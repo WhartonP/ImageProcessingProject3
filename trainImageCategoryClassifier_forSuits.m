@@ -3,7 +3,7 @@
 clear 
 close all
 %% Load Dataset
-imageFolder = 'V:\Datasets\Card Suits';
+imageFolder = 'V:\Datasets\Playing Cards\Card Suits';
 
 imds = imageDatastore(imageFolder, 'LabelSource', 'foldernames',...
     'IncludeSubfolders',true);
@@ -19,6 +19,6 @@ disp('-------------------------------------------------------');
 %% Training Classifier
 % Due to small dataset training is going to be done on all available
 % pictures and Evaluation will be done on test images from webcam
-categoryClassifier = trainImageCategoryClassifier(imds, bag);
+categoryClassifierSuits = trainImageCategoryClassifier(imds, bag);
 
-save categoryClassifier
+save categoryClassifierSuits
