@@ -3,7 +3,7 @@ close all
 clear
 %Image = inputdlg("Enter your filename:" + newline + ...%
 %"For example: V:\Image-Processing-Projects\ImageSet2\Testimage2.tif");
-Image = imread("Testimages/IMG_1510.jpeg");
+Image = imread("Testimages/IMG_1500.jpeg");
 imshow(Image)
 figure
 Image = rgb2gray(Image);
@@ -70,7 +70,7 @@ cropped = imcrop(R, [STATS3.BoundingBox(2,1) - 8 , STATS3.BoundingBox(2,2) - 8 ,
 % labelCNN = classify(net, imresize(cropped,[128 128]));
 
 %--------------------------------------------------------------------------
-load categoryClassifierSuits
+load categoryClassifierSuits2
 
 cropped2 = imcrop(R, [STATS3.BoundingBox(5,1) - 8 , STATS3.BoundingBox(5,2) - 8 ,...
     STATS3.BoundingBox(5,3) + 16, STATS3.BoundingBox(5,4) + 16]);
