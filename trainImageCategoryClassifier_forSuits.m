@@ -21,4 +21,4 @@ disp('-------------------------------------------------------');
 % pictures and Evaluation will be done on test images from webcam
 categoryClassifierSuits = trainImageCategoryClassifier(imds, bag);
 
-save categoryClassifierSuits
+save categoryClassifierSuits2
