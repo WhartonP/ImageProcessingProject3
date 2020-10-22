@@ -8,6 +8,6 @@ preview(cam);
 pause()
 for k = 1:500
     imOrig = rgb2gray(snapshot(cam));
-    imwrite(imOrig, ['WebcamImageRealBackG_' num2str(k) '.jpg']);
+    imwrite(imOrig, ['SuitRankImages' num2str(k) '.jpg']);
     pause()
 end

@@ -96,7 +96,8 @@ for j = 1 : length(stats2)
             imwrite(suit, ['CardSuit' num2str(imageNum) '.jpg']);
             imageNum = imageNum + 1;
         end
-        croppedImages{j,1} = imcrop(finalImage, thisBB);
+        croppedImages{j,1} = imcrop(finalImage, (thisBB + 8));
+        croppedImages{j,1} = imadjust(croppedImages{j,1});
         count = count + 1;
     end
 end
