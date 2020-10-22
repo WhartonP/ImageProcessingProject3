@@ -14,10 +14,12 @@ clear; close all;
 
 imageNum = 0;
 
-for k = 2545:2596
-imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_' num2str(k) '.jpeg']));
+for k = 1:52
+% imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_' num2str(k) '.jpeg']));
 % imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_2556.jpeg']));
-% imshow(imOrig);
+imOrig = imread(['CardTestImage' num2str(k) '.jpg']);
+figure; imshow(imOrig);
+imOrig = rgb2gray(imOrig);
 
 %Testing Dr. Sarrafs code - works for rotation 
 
@@ -25,7 +27,7 @@ imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/Project
 imBin = double(imbinarize(imOrig));
 imSmooth = imgaussfilt(imBin, 10);
 
-% figure; imshow(imBin);
+figure; imshow(imBin);
 
 % stats = regionprops(imBin, 'BoundingBox');
 % for i = 1:length(stats)
@@ -38,55 +40,72 @@ imSmooth = imgaussfilt(imBin, 10);
 Gdir(Gdir < 0) = Gdir(Gdir < 0) + 180;
 figure; hist = histogram(Gdir, 'BinWidth', 4);
 hist.BinCounts(1) = 0;
-[v, i] = max(hist.BinCounts);
-rot_ang = 180 - ((hist.BinEdges(i + 1) + hist.BinEdges(i)) / 2);
+[~, i] = max(hist.BinCounts);
+currMax = hist.BinEdges(i);
+currMax1 = hist.BinEdges(i + 1);
+hist.BinCounts(i) = 0;
+[~, i] = max(hist.BinCounts);
+nextMax = hist.BinEdges(i);
+if nextMax > 170 && currMax >= 88 && currMax <= 92
+    rot_ang = 0;
+else
+    rot_ang = 180 - ((currMax1 + currMax) / 2);
+end
 
 %rotates and shows the rotated image
 imRot = imrotate(imOrig, rot_ang, 'crop');
-% imshow(imRot);
+figure; imshow(imRot);
 
 %From orginal code for cropping
 %Crops the image - for working program
-imBinOrig2 =  imbinarize(imRot, .6);
+
+imBinOrig2 =  double(imbinarize(imRot, .4));
+figure; imshow(imBinOrig2);
+imBinOrig2 = imgaussfilt(imBinOrig2, 3);
 stats = regionprops(imBinOrig2, 'BoundingBox', 'Area');
 areas = stats.Area;
 [val,ind] = max([stats.Area]);
 bboxes=stats(ind).BoundingBox;
-% imshow(imBinOrig2);
-% for i = 1:length(stats)
-%     rectangle('Position',stats(i).BoundingBox,'EdgeColor','r');
-%     pause()
-% end
+
+figure; imshow(imBinOrig2);
+
+for l = 1:length(stats)
+    rectangle('Position',stats(l).BoundingBox,'EdgeColor','r');
+end
+
 finalImage = imcrop(imRot, bboxes);
+figure; imshow(finalImage);
 
 segImg = imbinarize(finalImage);
 segImg = imcomplement(segImg);
-connLabel = bwlabel(segImg);
-[Gmag2, Gdir2] = imgradient(connLabel);
-Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
-connLabel2 = bwlabel(Gdir2);
-figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
-hist2.BinCounts(1) = 0;
+% connLabel = bwlabel(segImg);
+% [Gmag2, Gdir2] = imgradient(connLabel);
+% Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
+% connLabel2 = bwlabel(Gdir2);
+% figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
+% hist2.BinCounts(1) = 0;
 
 stats2 = regionprops(segImg, 'Area', 'BoundingBox');
+
 croppedImages = cell(size(stats2, 1), 2);
 count = 0;
 
-% figure; imshow(segImg);
+figure; imshow(segImg);
 
 % for i = 1:length(stats2)
 %     rectangle('Position',stats2(i).BoundingBox,'EdgeColor','r');
-% %     pause()
 % end
+
 
 for j = 1 : length(stats2)
     thisBB = stats2(j).BoundingBox;
     croppedImages{j,2} = thisBB(3) / thisBB(4);
-    rectangle('Position', thisBB,'EdgeColor','r')
+%     rectangle('Position', thisBB,'EdgeColor','r')
     if count >= 2
         break
     elseif croppedImages{j,2} < 1 && croppedImages{j,2} > 0.5 && ...
-                            stats2(j).Area > 300 && stats2(j).Area < 10000
+                            stats2(j).Area > 300 && stats2(j).Area < ...
+                            max([stats2.Area])
         if count == 1
             rank = imcrop(finalImage, thisBB);
             imwrite(rank, ['CardRank' num2str(imageNum) '.jpg']);
@@ -110,46 +129,6 @@ imshow(rank);
 figure 
 imshow(suit);
 
-digits = {};
-while isempty(digits)
-    %To get the rank of the card
-    figure('Name', 'Rank'); imshow(rank);
-    Enhanced3 = imadjust(rank);
-    binary4 = imbinarize(Enhanced3);
-    results = ocr(binary4,'TextLayout','Block');
-    regularExpr = '\d';
-    % Get bounding boxes around text that matches the regular expression
-    bboxes = locateText(results,regularExpr,'UseRegexp',true);
-    digits = regexp(results.Text,regularExpr,'match');
-    if isempty(digits)
-        temp = rank;
-        rank = suit;
-        suit = rank;
-    end
-end
-
-% draw boxes around the digits
-% Idigits = insertObjectAnnotation(R,'rectangle',STATS3.BoundingBox(10,:),digits);
-% 
-% figure; 
-% imshow(Idigits);
-
-%--------------------------------------------------------------------------
-load categoryClassifier
-
-% cropped2 = imcrop(R, STATS3.BoundingBox(20,:));
-figure('Name', 'Suit'); imshow(suit);
-
-[labelIdx, ~] = predict(categoryClassifier, suit);
-
-%--------------------------------------------------------------------------
-
-predictSuit = categoryClassifier.Labels(labelIdx);
 
 
-disp(digits{1,1}); 
-disp(predictSuit);
-% RankSuit = insertObjectAnnotation(rank,'rectangle',...
-%     [STATS3.BoundingBox(20,:);STATS3.BoundingBox(10,:)],...
-%     [categoryClassifier.Labels(labelIdx) digits]);
-% imshow(RankSuit);
+
