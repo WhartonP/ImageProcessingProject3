@@ -15,10 +15,10 @@ clear; close all;
 imageNum = 0;
 
 for k = 1:52
-    % imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_' num2str(k) '.jpeg']));
+    %     imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_' num2str(k) '.jpeg']));
     % imOrig = rgb2gray(imread(['/Users/peter/Documents/MATLAB/ImageProcessing/ProjectThree/TestImages/IMG_2556.jpeg']));
     imOrig = imread(['CardTestImage' num2str(k) '.jpg']);
-    figure; imshow(imOrig);
+%     figure; imshow(imOrig);
     imOrig = rgb2gray(imOrig);
     
     %Testing Dr. Sarrafs code - works for rotation
@@ -27,7 +27,7 @@ for k = 1:52
     imBin = double(imbinarize(imOrig));
     imSmooth = imgaussfilt(imBin, 10);
     
-    figure; imshow(imBin);
+%     figure; imshow(imBin);
     
     % stats = regionprops(imBin, 'BoundingBox');
     % for i = 1:length(stats)
@@ -54,7 +54,7 @@ for k = 1:52
     
     %rotates and shows the rotated image
     imRot = imrotate(imOrig, rot_ang, 'crop');
-    figure; imshow(imRot);
+%     figure; imshow(imRot);
     
     %From orginal code for cropping
     %Crops the image - for working program
@@ -67,11 +67,11 @@ for k = 1:52
     [val,ind] = max([stats.Area]);
     bboxes=stats(ind).BoundingBox;
     
-    figure; imshow(imBinOrig2);
-    
-    for l = 1:length(stats)
-        rectangle('Position',stats(l).BoundingBox,'EdgeColor','r');
-    end
+%     figure; imshow(imBinOrig2);
+%     
+%     for l = 1:length(stats)
+%         rectangle('Position',stats(l).BoundingBox,'EdgeColor','r');
+%     end
     
     finalImage = imcrop(imRot, bboxes);
     %Makes sure the card is standing upright
@@ -84,29 +84,22 @@ for k = 1:52
             size(finalImage, 1) / size(finalImage, 2) < 1.5
         
         finalImageResized = imresize(finalImage, [400 300]);
-        regionOfInterest = imcrop(finalImageResized, [0 0 80 140]);
+        regionOfInterest = imcrop(finalImageResized, [0 0 50 120]);
         figure; imshow(regionOfInterest);
     else
         disp('Invalid picture, take a new one');
         continue
     end
     
-    segImg = imbinarize(regionOfInterest);
+    segImg = imgaussfilt(regionOfInterest, 2);
+    segImg = imbinarize(segImg);
     segImg = imcomplement(segImg);
-    % connLabel = bwlabel(segImg);
-    % [Gmag2, Gdir2] = imgradient(connLabel);
-    % Gdir2(Gdir2 < 0) = Gdir2(Gdir2 < 0) + 180;
-    % connLabel2 = bwlabel(Gdir2);
-    % figure; hist2 = histogram(Gdir2, 'BinWidth', 4);
-    % hist2.BinCounts(1) = 0;
     
     stats2 = regionprops(segImg, 'Area', 'BoundingBox');
     
     croppedImages = cell(size(stats2, 1), 2);
     count = 0;
     figure; imshow(segImg);
-    
-%     figure; imshow(regionOfInterest);
     
     for i = 1:length(stats2)
         rectangle('Position',stats2(i).BoundingBox,'EdgeColor','r');
@@ -119,32 +112,52 @@ for k = 1:52
         %     rectangle('Position', thisBB,'EdgeColor','r')
         if count >= 2
             break
-        elseif croppedImages{j,2} < 1 && croppedImages{j,2} > 0.5 && ...
-                stats2(j).Area > 300
+        elseif stats2(j).Area > 150 && stats2(j).Area < 1000 && ...
+                croppedImages{j,2} < 1.5 && croppedImages{j,2} > 0.5
             if count == 1
-                rank = imcrop(regionOfInterest, [(thisBB(1) - 8) ...
-                    (thisBB(2) - 8) (thisBB(3) + 16) (thisBB(4) + 16)]);
+                rank = imcrop(regionOfInterest, thisBB);
                 imwrite(rank, ['CardRank' num2str(imageNum) '.jpg']);
                 imageNum = imageNum + 1;
             elseif count == 0
-                suit = imcrop(regionOfInterest, [(thisBB(1) - 8) ...
-                    (thisBB(2) - 8) (thisBB(3) + 16) (thisBB(4) + 16)]);
+                suit = imcrop(regionOfInterest, thisBB);
                 imwrite(suit, ['CardSuit' num2str(imageNum) '.jpg']);
                 imageNum = imageNum + 1;
             end
-            croppedImages{j,1} = imcrop(regionOfInterest, [(thisBB(1) - 8) ...
-                    (thisBB(2) - 8) (thisBB(3) + 16) (thisBB(4) + 16)]);
+            croppedImages{j,1} = imcrop(regionOfInterest, thisBB);
             croppedImages{j,1} = imadjust(croppedImages{j,1});
             count = count + 1;
         end
     end
     
-%     close all
     figure;
     imshow(rank);
     figure;
     imshow(suit);
     
-    
-    
+    % %% Classifying Rank and Suit
+    % load categoryClassifierRanks3
+    % load categoryClassifierSuits2
+    %
+    % [RankIdx1, scores1] = predict(categoryClassifier, rank);
+    % [RankIdx2, scores2] = predict(categoryClassifier, suit);
+    %
+    % if (var((scores1+1)*100) > var((scores2+1)*100))
+    %     Rank = categoryClassifier.Labels(RankIdx1);
+    %     [SuitIdx, ~] = predict(categoryClassifierSuits, suit);
+    %     Suit = categoryClassifierSuits.Labels(SuitIdx);
+    % else
+    %     Rank = categoryClassifier.Labels(RankIdx2);
+    %     [SuitIdx, ~] = predict(categoryClassifierSuits, rank);
+    %     Suit = categoryClassifierSuits.Labels(SuitIdx);
+    % end
+    % fprintf("Rank = %s \n", Rank{1});
+    % fprintf("Suit = %s \n", Suit{1});
+    % disp("---------------------------------");
+    pause
+    close all
 end
+
+
+
+
+
