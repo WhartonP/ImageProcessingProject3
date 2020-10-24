@@ -8,7 +8,7 @@ imageFolder = 'V:\Datasets\Playing Cards\Card Ranks';
 imds = imageDatastore(imageFolder, 'LabelSource', 'foldername','IncludeSubfolders',true);
 
 %% Split Dataset for training and evaluation
-[trainingSet,testSet] = splitEachLabel(imds,0.85,'randomize');
+[trainingSet,testSet] = splitEachLabel(imds,0.9,'randomize');
 
 %% counting the labels
 tbl = countEachLabel(imds)
@@ -30,4 +30,4 @@ disp('-------------------------------------------------------');
 mean(diag(confMatrix))
 disp('-------------------------------------------------------');
 
-save categoryClassifierRanks3
+save categoryClassifierRanks4

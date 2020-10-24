@@ -8,17 +8,27 @@ imageFolder = 'V:\Datasets\Playing Cards\Card Suits';
 imds = imageDatastore(imageFolder, 'LabelSource', 'foldernames',...
     'IncludeSubfolders',true);
 
+%% Split Dataset for training and evaluation
+[trainingSet,testSet] = splitEachLabel(imds,0.9,'randomize');
+
 %% counting the labels
 tbl = countEachLabel(imds)
 disp('-------------------------------------------------------');
 
 %% Create a Visual Vocabulary and Train an Image Category Classifier
-bag = bagOfFeatures(imds);
+bag = bagOfFeatures(trainingSet);
 disp('-------------------------------------------------------');
 
 %% Training Classifier
-% Due to small dataset training is going to be done on all available
-% pictures and Evaluation will be done on test images from webcam
-categoryClassifierSuits = trainImageCategoryClassifier(imds, bag);
+categoryClassifierSuits = trainImageCategoryClassifier(trainingSet,bag);
+disp('-------------------------------------------------------');
 
-save categoryClassifierSuits2
+%% Confusion Matrix
+confMatrix = evaluate(categoryClassifierSuits,testSet)
+disp('-------------------------------------------------------');
+
+%% Average Accuracy for Classification
+mean(diag(confMatrix))
+disp('-------------------------------------------------------');
+
+save categoryClassifierSuits3

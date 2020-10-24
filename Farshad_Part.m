@@ -53,7 +53,7 @@ end
 
 
 %--------------------------------------------------------------------------
-load categoryClassifierRanks2
+load categoryClassifierRanks4
 
 cropped = imcrop(R, [STATS3.BoundingBox(2,1) - 8 , STATS3.BoundingBox(2,2) - 8 ,...
     STATS3.BoundingBox(2,3) + 16, STATS3.BoundingBox(2,4) + 16]);
@@ -70,7 +70,7 @@ cropped = imcrop(R, [STATS3.BoundingBox(2,1) - 8 , STATS3.BoundingBox(2,2) - 8 ,
 % labelCNN = classify(net, imresize(cropped,[128 128]));
 
 %--------------------------------------------------------------------------
-load categoryClassifierSuits2
+load categoryClassifierSuits3
 
 cropped2 = imcrop(R, [STATS3.BoundingBox(5,1) - 8 , STATS3.BoundingBox(5,2) - 8 ,...
     STATS3.BoundingBox(5,3) + 16, STATS3.BoundingBox(5,4) + 16]);

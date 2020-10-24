@@ -1,8 +1,8 @@
 
-directory = 'V:\Datasets\Playing Cards\SuitRankTests\2';
-load categoryClassifierRanks3
+directory = 'V:\Datasets\Playing Cards\SuitRankTests\5';
+load categoryClassifierRanks4
 load categoryClassifierSuits2
-
+categoryClassifier
 % Using Both Category Classifiers
 if ~isempty(directory)
     ImageSet = dir(fullfile(directory,'*.jpg'));
@@ -15,7 +15,7 @@ if ~isempty(directory)
         Suit = categoryClassifierSuits.Labels(labelIdx2);
         T = sprintf("Rank: %s  /  Suit: %s", Rank{1}, Suit{1});
         title(T);
-        saveas(gcf,"V:\Datasets\Playing Cards\SuitRankTests\2\FinalResults1\Result " + sprintf("%d.jpg",i)); 
+        saveas(gcf,"V:\Datasets\Playing Cards\SuitRankTests\5\Final Results 2\Result " + sprintf("%d.jpg",i)); 
         disp("------------------------------Next-------------------------------");
         %pause;
     end
