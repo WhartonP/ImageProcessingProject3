@@ -30,4 +30,4 @@ disp('-------------------------------------------------------');
 mean(diag(confMatrix))
 disp('-------------------------------------------------------');
 
-save categoryClassifierRanks4
+save categoryClassifierRanks5
